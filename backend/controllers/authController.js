@@ -37,15 +37,27 @@ exports.login = async (req, res) => {
   }
 };
 
+const FIREBASE_PROJECT_ID = 'interviewiq-626b7';
+
+async function verifyFirebaseToken(idToken) {
+  const publicKeysRes = await axios.get(
+    `https://www.googleapis.com/robot/v1/metadata/x509/securetoken@system.gserviceaccount.com/${FIREBASE_PROJECT_ID}`
+  );
+  const publicKeys = publicKeysRes.data;
+  const header = JSON.parse(Buffer.from(idToken.split('.')[0], 'base64').toString());
+  const publicKey = publicKeys[header.kid];
+  if (!publicKey) throw new Error('No matching public key');
+  const decoded = jwt.verify(idToken, publicKey, { algorithms: ['RS256'] });
+  if (decoded.aud !== FIREBASE_PROJECT_ID) throw new Error('Wrong audience');
+  if (decoded.iss !== `https://securetoken.google.com/${FIREBASE_PROJECT_ID}`) throw new Error('Wrong issuer');
+  return decoded;
+}
+
 exports.googleLogin = async (req, res) => {
   try {
     const { idToken } = req.body;
-    
-    const googleResponse = await axios.post(
-      `https://oauth2.googleapis.com/tokeninfo?id_token=${idToken}`
-    );
-    
-    const { email, name, sub } = googleResponse.data;
+    const decoded = await verifyFirebaseToken(idToken);
+    const { email, name, sub } = decoded;
     
     if (!email) {
       return res.status(400).json({ message: 'Invalid Google token' });
