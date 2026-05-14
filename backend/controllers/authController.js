@@ -42,25 +42,22 @@ exports.googleLogin = async (req, res) => {
     const { idToken } = req.body;
     
     const googleResponse = await axios.post(
-      `https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${process.env.VITE_FIREBASE_APIKEY}`,
-      { idToken }
+      `https://oauth2.googleapis.com/tokeninfo?id_token=${idToken}`
     );
     
-    if (!googleResponse.data.users || googleResponse.data.users.length === 0) {
+    const { email, name, sub } = googleResponse.data;
+    
+    if (!email) {
       return res.status(400).json({ message: 'Invalid Google token' });
     }
-    
-    const googleUser = googleResponse.data.users[0];
-    const { email, displayName, localId } = googleUser;
     
     let user = await User.findOne({ email });
     
     if (!user) {
       user = await User.create({
-        name: displayName || 'Google User',
+        name: name || 'Google User',
         email,
-        password: bcrypt.hashSync(localId + 'google', 10),
-        isGoogleLogin: true
+        password: bcrypt.hashSync(sub + 'google', 10)
       });
     }
     
