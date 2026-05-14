@@ -21,7 +21,7 @@ const doubtRoutes = require('./routes/doubt');
 const app = express();
 
 const corsOptions = {
-  origin: ['https://ai-carrer-tau.vercel.app', 'http://localhost:5173'],
+  origin: ['https://ai-carrer-tau.vercel.app', 'http://localhost:5173', 'http://13.48.46.209'],
   credentials: true
 };
 app.use(cors(corsOptions));
