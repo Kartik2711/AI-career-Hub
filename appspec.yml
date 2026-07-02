@@ -2,9 +2,16 @@ version: 0.0
 os: linux
 files:
   - source: /
-    destination: /home/ubuntu/app 
+    destination: /home/ubuntu/app
     overwrite: true
 permissions:
+  - object: /home/ubuntu/app
+    owner: ubuntu
+    group: ubuntu
+    mode: '755'
+    type:
+      - directory
+      - file
   - object: /home/ubuntu/app/scripts
     pattern: "*.sh"
     mode: '755'
