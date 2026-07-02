@@ -9,10 +9,14 @@ permissions:
     owner: ubuntu
     group: ubuntu
     mode: '755'
+    except:
+      - /home/ubuntu/app/scripts
     type:
       - directory
       - file
   - object: /home/ubuntu/app/scripts
+    owner: ubuntu
+    group: ubuntu
     pattern: "*.sh"
     mode: '755'
     type:
