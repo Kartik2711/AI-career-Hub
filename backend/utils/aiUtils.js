@@ -1,20 +1,16 @@
 const axios = require('axios');
-
 const extractJSON = (response) => {
   if (!response || typeof response !== 'string') {
     return null;
   }
-
   let cleaned = response
     .replace(/```json/g, '')
     .replace(/```/g, '')
     .trim();
-
   // Try direct parse first
   try {
     return JSON.parse(cleaned);
   } catch (e) {}
-
   // Find the first [ and last ] to extract array
   const firstBrack = cleaned.indexOf('[');
   const lastBrack = cleaned.lastIndexOf(']');
@@ -24,7 +20,6 @@ const extractJSON = (response) => {
       return JSON.parse(arrStr);
     } catch (e) {}
   }
-
   // Find first { and last } to extract object
   const firstBrace = cleaned.indexOf('{');
   const lastBrace = cleaned.lastIndexOf('}');
@@ -34,27 +29,22 @@ const extractJSON = (response) => {
       return JSON.parse(objStr);
     } catch (e) {}
   }
-
   console.log('extractJSON failed, cleaned:', cleaned.substring(0, 200));
   return null;
 };
-
 const generateWithAI = async (prompt, systemPrompt = 'You are a helpful AI assistant.', returnJSON = false) => {
   const apiKey = process.env.OPENROUTER_API_KEY;
   
   if (!apiKey) {
     throw new Error('OPENROUTER_API_KEY is not configured');
   }
-
   // Try multiple models
   const models = [
-    'google/gemini-2.0-flash-001',
-    'google/gemini-flash-1.5-8b',
-    'meta-llama/llama-3.1-8b-instruct'
+    'meta-llama/llama-3.1-8b-instruct:free',
+    'google/gemini-2.0-flash-exp:free',
+    'mistralai/mistral-7b-instruct:free'
   ];
-
   let lastError = null;
-
   for (const model of models) {
     try {
       console.log(`Trying model: ${model}`);
@@ -87,7 +77,6 @@ const generateWithAI = async (prompt, systemPrompt = 'You are a helpful AI assis
       }
       
       const content = response.data.choices[0].message.content;
-
       if (returnJSON) {
         const parsed = extractJSON(content);
         if (!parsed) {
@@ -98,7 +87,6 @@ const generateWithAI = async (prompt, systemPrompt = 'You are a helpful AI assis
         console.log(`Model ${model} returned valid JSON`);
         return parsed;
       }
-
       return content;
     } catch (error) {
       console.log(`Model ${model} failed:`, error.message);
@@ -116,10 +104,8 @@ const generateWithAI = async (prompt, systemPrompt = 'You are a helpful AI assis
       }
     }
   }
-
   // All models failed
   console.error('All AI models failed. Last error:', lastError?.message);
   throw new Error(lastError?.message || 'All AI models failed. Please try again later.');
 };
-
 module.exports = { generateWithAI, extractJSON };
